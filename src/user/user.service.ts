@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -20,29 +20,32 @@ export class UserService {
     return this.prisma.user.findMany();
   }
 
-  findOne(id: number) {
-    if (!id) {
-      throw new NotFoundException(`O Usuário ${id} não existe (the user ${id} not found`);
+  async findOne(id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new HttpException(`O usuario referente ao id ${id} não existe`, 400);
     }
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  update(id: number, data: { name?: string; email?: string }) {
-    if (!id) {
-      throw new NotFoundException(`O Usuário ${id} não existe (the user ${id} not found`);
+  async update(id: number, data: { name?: string; email?: string }) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new HttpException(`O usuario referente ao id ${id} não existe`, 400);
     }
     return this.prisma.user.update({ where: { id }, data, });
   }
-async addFavorite(userId: number, postId: number) {
-  return this.prisma.favorite.create({
-    data: { userId, postId },
-  });
-}
+
+  async addFavorite(userId: number, postId: number) {
+    return this.prisma.favorite.create({
+      data: { userId, postId },
+    });
+  }
   async getFavorites(userId: number) {
-  return this.prisma.favorite.findMany({
-    where: { userId },
-    include: { post: true },
-  });
-}
-  
+    return this.prisma.favorite.findMany({
+      where: { userId },
+      include: { post: true },
+    });
+  }
+
 }
